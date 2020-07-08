@@ -25,10 +25,12 @@ Make sure to change the MODEL_PATH, RES_PATH when running the code on customized
 
 The code will run each attack targetting each label. It will print out the AUC of detection and the attack success rate at 2% and 5% FPR. 
 
-###Citation
+### Citation
+```
 @inproceedings{shan2019gotta,
   title={Gotta catch’em all: Using honeypots to catch adversarial attacks on neural networks},
   author={Shan, Shawn and Wenger, Emily and Wang, Bolun and Li, Bo and Zheng, Haitao and Zhao, Ben Y},
   journal={Proc. of CCS},
-  year={2019}
+  year={2020}
 }
+```
