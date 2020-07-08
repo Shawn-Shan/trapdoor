@@ -27,7 +27,7 @@ The code will run each attack targetting each label. It will print out the AUC o
 
 ### Citation
 ```
-@inproceedings{shan2019gotta,
+@inproceedings{shan2020gotta,
   title={Gotta catch’em all: Using honeypots to catch adversarial attacks on neural networks},
   author={Shan, Shawn and Wenger, Emily and Wang, Bolun and Li, Bo and Zheng, Haitao and Zhao, Ben Y},
   journal={Proc. of CCS},
