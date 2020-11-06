@@ -1,19 +1,20 @@
 import argparse
+import os
 import pickle
+import random
 import sys
 
+import keras
+import numpy as np
 from keras.callbacks import LearningRateScheduler
 from keras.callbacks import ReduceLROnPlateau
 from keras.preprocessing.image import ImageDataGenerator
 from tensorflow import set_random_seed
-import os
-import keras
-import random
-import numpy as np
 from trap_utils import injection_func, init_gpu, CoreModel, craft_trapdoors, CallbackGenerator, load_dataset
 
-MODEL_PREFIX = "../models/"
-DIRECTORY = '../results/'
+MODEL_PREFIX = "models/"
+DIRECTORY = 'results/'
+
 
 class DataGenerator(object):
     def __init__(self, target_ls, pattern_dict, num_classes):
@@ -23,7 +24,6 @@ class DataGenerator(object):
 
     def mask_pattern_func(self, y_target):
         mask, pattern = random.choice(self.pattern_dict[y_target])
-
         mask = np.copy(mask)
 
         return mask, pattern
@@ -56,11 +56,11 @@ class DataGenerator(object):
 def lr_schedule(epoch):
     lr = 1e-3
     if epoch > 50:
-        lr *= 0.5e-3
+        lr *= 0.5e-1
     elif epoch > 40:
-        lr *= 1e-3
+        lr *= 1e-1
     elif epoch > 15:
-        lr *= 1e-2
+        lr *= 1e-1
     elif epoch > 10:
         lr *= 1e-1
     print('Learning rate: ', lr)
@@ -68,60 +68,36 @@ def lr_schedule(epoch):
 
 
 def main():
-    random.seed(args.random)
-    np.random.seed(args.random)
-    set_random_seed(args.random)
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    set_random_seed(args.seed)
 
     sess = init_gpu(args.gpu)
-
-    model = CoreModel(args.dataset, load_clean=True)
+    model = CoreModel(args.dataset, load_clean=False)
     new_model = model.model
 
     target_ls = range(model.num_classes)
     INJECT_RATIO = args.inject_ratio
     print("Injection Ratio: ", INJECT_RATIO)
-    f_name = "{}_numtgt{}{}_{}_{}".format(args.dataset, model.num_classes, args.suffix, args.inject_ratio, args.random)
-
+    f_name = "{}".format(args.dataset)
 
     os.makedirs(DIRECTORY, exist_ok=True)
     file_prefix = os.path.join(DIRECTORY, f_name)
 
-    pattern_dict = craft_trapdoors(target_ls, model.img_shape, 5, pattern_per_label=1,
-                                   pattern_size=model.pattern_size, mask_ratio=model.mask_ratio)
+    pattern_dict = craft_trapdoors(target_ls, model.img_shape, args.num_cluster,
+                                   pattern_size=args.pattern_size, mask_ratio=args.mask_ratio,
+                                   mnist=1 if args.dataset == 'mnist' else 0)
 
     RES = {}
     RES['target_ls'] = target_ls
     RES['pattern_dict'] = pattern_dict
 
-    if args.suffix == "aug":
-        data_gen = ImageDataGenerator(
-            featurewise_center=False,
-            samplewise_center=False,
-            featurewise_std_normalization=False,
-            samplewise_std_normalization=False,
-            zca_whitening=False,
-            zca_epsilon=1e-06,
-            rotation_range=0,
-            width_shift_range=0.1,
-            height_shift_range=0.1,
-            shear_range=0.,
-            zoom_range=0.,
-            channel_shift_range=0.,
-            fill_mode='nearest',
-            cval=0.,
-            horizontal_flip=True,
-            vertical_flip=False,
-            rescale=None,
-            preprocessing_function=None,
-            data_format=None,
-            validation_split=0.0)
-    else:
-        data_gen = ImageDataGenerator()
+    data_gen = ImageDataGenerator()
 
     X_train, Y_train, X_test, Y_test = load_dataset(args.dataset)
     train_generator = data_gen.flow(X_train, Y_train, batch_size=32)
-    test_generator = data_gen.flow(X_test, Y_test, batch_size=32)
     number_images = len(X_train)
+    test_generator = data_gen.flow(X_test, Y_test, batch_size=32)
 
     new_model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(lr=lr_schedule(0)),
                       metrics=['accuracy'])
@@ -135,12 +111,13 @@ def main():
     base_gen = DataGenerator(target_ls, pattern_dict, model.num_classes)
     test_adv_gen = base_gen.generate_data(test_generator, 1)
     test_nor_gen = base_gen.generate_data(test_generator, 0)
-    train_gen = base_gen.generate_data(train_generator, INJECT_RATIO)
+    clean_train_gen = base_gen.generate_data(train_generator, 0)
+    trap_train_gen = base_gen.generate_data(train_generator, INJECT_RATIO)
 
     os.makedirs(MODEL_PREFIX, exist_ok=True)
     os.makedirs(DIRECTORY, exist_ok=True)
 
-    model_file = MODEL_PREFIX + f_name + "model.h5"
+    model_file = MODEL_PREFIX + f_name + "_model.h5"
     RES["model_file"] = model_file
 
     if os.path.exists(model_file):
@@ -149,8 +126,15 @@ def main():
     cb = CallbackGenerator(test_nor_gen, test_adv_gen, model_file=model_file, expected_acc=model.expect_acc)
     callbacks = [lr_reducer, lr_scheduler, cb]
 
-    new_model.fit_generator(train_gen, validation_data=test_nor_gen, steps_per_epoch=number_images // 32,
-                            epochs=model.epochs, verbose=2, callbacks=callbacks, validation_steps=500,
+    print("First Step: Training Normal Model...")
+    new_model.fit_generator(clean_train_gen, validation_data=test_nor_gen, steps_per_epoch=number_images // 32,
+                            epochs=model.epochs, verbose=2, callbacks=callbacks, validation_steps=100,
+                            use_multiprocessing=True,
+                            workers=1)
+
+    print("Second Step: Injecting Trapdoor...")
+    new_model.fit_generator(trap_train_gen, validation_data=test_nor_gen, steps_per_epoch=number_images // 32,
+                            epochs=model.epochs, verbose=2, callbacks=callbacks, validation_steps=100,
                             use_multiprocessing=True,
                             workers=1)
 
@@ -162,25 +146,22 @@ def main():
 
     RES["normal_acc"] = acc
     loss, backdoor_acc = new_model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
-    RES["backdoor_acc"] = backdoor_acc
+    RES["trapdoor_acc"] = backdoor_acc
 
-    pickle.dump(RES, open(file_prefix + "_res.p", 'wb'))
+    file_save_path = file_prefix + "_res.p"
+    pickle.dump(RES, open(file_save_path, 'wb'))
+    print("File saved to {}, use this path as protected-path for the eval script. ".format(file_save_path))
 
 
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', type=str,
-                        help='GPU id', default='0')
-    parser.add_argument('--dataset', type=str,
-                        help='name of dataset', default='cifar')
-    parser.add_argument('--load-clean', type=int,
-                        help='name of dataset', default=1)
-    parser.add_argument('--suffix', type=str,
-                        help='suffix of the model', default='')
-    parser.add_argument('--inject-ratio', type=float,
-                        help='injection ratio', default=0.5)
-    parser.add_argument('--random', type=int,
-                        help='', default=0)
+    parser.add_argument('--gpu', type=str, help='GPU id', default='0')
+    parser.add_argument('--dataset', type=str, help='name of dataset', default='mnist')
+    parser.add_argument('--inject-ratio', type=float, help='injection ratio', default=0.5)
+    parser.add_argument('--seed', type=int, help='', default=0)
+    parser.add_argument('--num_cluster', type=int, help='', default=5)
+    parser.add_argument('--pattern_size', type=int, help='', default=3)
+    parser.add_argument('--mask_ratio', type=float, help='', default=0.1)
 
     return parser.parse_args(argv)
 
