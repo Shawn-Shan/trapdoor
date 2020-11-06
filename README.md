@@ -8,6 +8,17 @@ The code base currently only support MNIST dataset (other dataset support coming
 
 More code will be released before the paper is published in Nov 2020. 
 
+### DEPENDENCIES
+
+Our code is implemented and tested on Keras with TensorFlow backend. Following packages are used by our code.
+
+- `keras==2.3.1`
+- `numpy==1.14.0`
+- `tensorflow-gpu==1.16.4`
+
+Our code is tested on `Python 3.6.8`
+
+
 ### How to train a trapdoored model
 
 There is a pretrained CIFAR trapdoored model in ./model and the trapdoors injected are in ./results
