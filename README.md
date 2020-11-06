@@ -14,7 +14,7 @@ More code will be released before the paper is published in Nov 2020.
 Our code is implemented and tested on Keras with TensorFlow backend. Following packages are used by our code.
 
 - `keras==2.3.1`
-- `numpy==`1.16.4`
+- `numpy==1.16.4`
 - `tensorflow-gpu==1.14.1`
 
 Our code is tested on `Python 3.6.8`
