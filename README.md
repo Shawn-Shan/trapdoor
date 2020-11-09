@@ -1,7 +1,7 @@
 # Gotta Catch 'Em All: Using Honeypots to Catch Adversarial Attacks on Neural Networks
 ### ABOUT
 
-This repository contains code implementation of the paper "[Gotta Catch’Em All: Using Honeypots to Catch Adversarial Attacks on Neural Networks](https://www.shawnshan.com/files/publication/trapdoor.pdf)", at *ACM CCS 2020*. The slides are [here](https://www.shawnshan.com/publication/backdoor-sp19-slides.pdf). 
+This repository contains code implementation of the paper "[Gotta Catch’Em All: Using Honeypots to Catch Adversarial Attacks on Neural Networks](https://www.shawnshan.com/files/publication/trapdoor.pdf)", at *ACM CCS 2020*. The slides are [here](https://www.shawnshan.com/files/publication/trapdoor-ccs-clean.pdf). 
 Trapdoor is a defense against adversarial attack developed by researchers at [SANDLab](https://sandlab.cs.uchicago.edu/), University of Chicago.  
 
 ### Note
