@@ -28,6 +28,10 @@ If you would like to train a new model or change the setup:
 
 `python3 inject_trapdoor.py --dataset mnist`
 
+To randomize the neuron matching process as we discussed in Section 7.2:
+`python3 inject_trapdoor.py --dataset mnist --filter-ratio 0.1`
+
+
 ### How to run attack and detection: 
 
 Given a trapdoored model in ./model and pattern stored in ./results. Run: 
