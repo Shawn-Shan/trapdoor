@@ -28,7 +28,8 @@ def neuron_extractor(all_model_layers, x_input):
     return vector
 
 
-def eval_filter_pattern(bottleneck_model, X_train, Y_train, X_test, X_adv_raw, y_target, pattern_dict, num_classes):
+def eval_filter_pattern(bottleneck_model, X_train, Y_train, X_test, X_adv_raw, y_target, pattern_dict, num_classes,
+                        filter_ratio=1.0):
     def build_neuron_signature(bottleneck_model, X, Y, y_target):
         X_adv = np.array(
             [infect_X(img, y_target, pattern_dict=pattern_dict, num_classes=num_classes)[0] for img in np.copy(X)])
@@ -38,9 +39,7 @@ def eval_filter_pattern(bottleneck_model, X_train, Y_train, X_test, X_adv_raw, y
         return sig
 
     adv_sig = build_neuron_signature(bottleneck_model, X_train, Y_train, y_target)
-
     X = np.array(X_test)
-
     X_adv = preprocess(X_adv_raw, method="raw")
     X_neuron = bottleneck_model.predict(X)
     X_neuron_adv = bottleneck_model.predict(X_adv)
@@ -48,6 +47,14 @@ def eval_filter_pattern(bottleneck_model, X_train, Y_train, X_test, X_adv_raw, y
     scores = []
     sybils = set()
     idx = 0
+
+    number_neuron = X_neuron_adv.shape[1]
+    number_keep = int(number_neuron * filter_ratio)
+    n_mask = np.array([1] * number_keep + [0] * (number_neuron - number_keep))
+    n_mask = np.array(shuffle(n_mask))
+    X_neuron = X_neuron * n_mask
+    X_neuron_adv = X_neuron_adv * n_mask
+
     normal_scores = test_neuron_cosine_sim(X_neuron, adv_sig)
 
     for score in normal_scores:
@@ -157,7 +164,8 @@ def eval_defense():
             fnr_ls, roc_data, normal_scores, adv_scores = eval_filter_pattern(bottleneck_model, selected_X, selected_Y,
                                                                               succ_sub_X, adv_x,
                                                                               y_target, pattern_dict=pattern_dict,
-                                                                              num_classes=model.num_classes)
+                                                                              num_classes=model.num_classes,
+                                                                              filter_ratio=args.filter_ratio)
 
             RES[y_target][attack] = {}
             RES[y_target][attack]['attack_succ'] = attack_succ
@@ -176,6 +184,8 @@ def parse_arguments(argv):
                         help='name of dataset', default='mnist')
     parser.add_argument('--attack', type=str,
                         help='attack type', default='pgd')
+    parser.add_argument('--filter-ratio', type=float,
+                        help='ratio of neuron kept for matching', default=1.0)
     return parser.parse_args(argv)
 
 
