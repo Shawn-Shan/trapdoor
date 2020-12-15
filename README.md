@@ -1,7 +1,7 @@
 # Gotta Catch 'Em All: Using Honeypots to Catch Adversarial Attacks on Neural Networks
 ### ABOUT
 
-This repository contains code implementation of the paper "[Gotta Catch’Em All: Using Honeypots to Catch Adversarial Attacks on Neural Networks](https://www.shawnshan.com/files/publication/trapdoor.pdf)", at *ACM CCS 2020*. The slides are [here](https://www.shawnshan.com/publication/backdoor-sp19-slides.pdf). 
+This repository contains code implementation of the paper "[Gotta Catch’Em All: Using Honeypots to Catch Adversarial Attacks on Neural Networks](https://www.shawnshan.com/files/publication/trapdoor.pdf)", at *ACM CCS 2020*. The slides are [here](https://www.shawnshan.com/files/publication/trapdoor-ccs-clean.pdf). 
 Trapdoor is a defense against adversarial attack developed by researchers at [SANDLab](https://sandlab.cs.uchicago.edu/), University of Chicago.  
 
 ### Note
@@ -14,8 +14,8 @@ More code will be released before the paper is published in Nov 2020.
 Our code is implemented and tested on Keras with TensorFlow backend. Following packages are used by our code.
 
 - `keras==2.3.1`
-- `numpy==1.14.0`
-- `tensorflow-gpu==1.16.4`
+- `numpy==1.16.4`
+- `tensorflow-gpu==1.14.1`
 
 Our code is tested on `Python 3.6.8`
 
