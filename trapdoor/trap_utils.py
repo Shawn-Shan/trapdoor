@@ -56,11 +56,11 @@ class CoreModel(object):
             num_classes = 10
             img_shape = (32, 32, 3)
             per_label_ratio = 0.1
-            expect_acc = 0.84
+            expect_acc = 0.75
             target_layer = 'dense'
             mask_ratio = 0.03
             pattern_size = 3
-            epochs = 30
+            epochs = 20
 
         elif dataset == "mnist":
             num_classes = 10
@@ -170,6 +170,9 @@ def load_dataset(dataset):
     if dataset == "cifar":
         from keras.datasets import cifar10
         (X_train, Y_train), (X_test, Y_test) = cifar10.load_data()
+        X_train = X_train / 255.0
+        X_test = X_test / 255.0
+
         Y_train = keras.utils.to_categorical(Y_train, 10)
         Y_test = keras.utils.to_categorical(Y_test, 10)
     elif dataset == 'mnist':

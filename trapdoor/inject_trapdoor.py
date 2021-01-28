@@ -86,7 +86,7 @@ def main():
 
     pattern_dict = craft_trapdoors(target_ls, model.img_shape, args.num_cluster,
                                    pattern_size=args.pattern_size, mask_ratio=args.mask_ratio,
-                                   mnist=1 if args.dataset == 'mnist' else 0)
+                                   mnist=1 if args.dataset == 'mnist' or args.dataset == 'cifar' else 0)
 
     RES = {}
     RES['target_ls'] = target_ls
@@ -156,10 +156,10 @@ def main():
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=str, help='GPU id', default='0')
-    parser.add_argument('--dataset', type=str, help='name of dataset', default='mnist')
+    parser.add_argument('--dataset', type=str, help='name of dataset. mnist or cifar', default='mnist')
     parser.add_argument('--inject-ratio', type=float, help='injection ratio', default=0.5)
     parser.add_argument('--seed', type=int, help='', default=0)
-    parser.add_argument('--num_cluster', type=int, help='', default=5)
+    parser.add_argument('--num_cluster', type=int, help='', default=7)
     parser.add_argument('--pattern_size', type=int, help='', default=3)
     parser.add_argument('--mask_ratio', type=float, help='', default=0.1)
 
