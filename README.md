@@ -28,9 +28,9 @@ If you would like to train a new model or change the setup:
 
 `python3 inject_trapdoor.py --dataset mnist`
 
-To randomize the neuron matching process as we discussed in Section 7.2:
+`python3 inject_trapdoor.py --dataset cifar`
 
-`python3 inject_trapdoor.py --dataset mnist --filter-ratio 0.1`
+
 
 
 ### How to run attack and detection: 
@@ -39,9 +39,15 @@ Given a trapdoored model in ./model and pattern stored in ./results. Run:
 
 `python3 eval_detection.py --dataset mnist --attack pgd`
 
+`python3 eval_detection.py --dataset cifar --attack pgd`
+
 Make sure to change the MODEL_PATH, RES_PATH when running the code on customized models. 
 
 The code will run targeted PGD attack on 3 randomly selected label. It will print out the AUC of detection and the attack success rate at 5% FPR. 
+
+To randomize the neuron matching process as we discussed in Section 7.2:
+
+`python3 eval_detection.py --dataset mnist --filter-ratio 0.1`
 
 ### Citation
 ```
